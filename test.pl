@@ -1,3 +1,4 @@
+use lib '.';
 use Relations::Query;
 
 $query_one = "select barney as fife " . 
@@ -18,15 +19,11 @@ $query = new Relations::Query(-select   => {'fife' => 'barney'},
 
 $get_query = $query->get();
 
-#print "get_query: '$get_query'\nquery_one: '$query_one'\n\n";
-
 die "Query new or get failed" unless ($get_query eq $query_one);
  
 $clone = $query->clone();
 
 $clone_query = $clone->get();
-
-#print "get_query: '$get_query'\nclone_query: '$clone_query'\n\n";
 
 die "Query clone failed" unless ($get_query eq $clone_query);
  
@@ -48,8 +45,6 @@ $query->add(-select   => {'bee' => 'aunt'},
 
 $add_query = $query->get();
 
-#print "query_two: '$query_two'\nadd_query: '$add_query'\n\n";
-
 die "Query add failed" unless ($query_two eq $add_query);
  
 $query_thr = "select sparkle as clean " . 
@@ -70,8 +65,6 @@ $query->set(-select   => {'clean' => 'sparkle'},
 
 $set_query = $query->get();
 
-#print "query_thr: '$query_thr'\nset_query: '$set_query'\n\n";
-
 die "Query set failed" unless ($query_thr eq $set_query);
  
 $query_num_for = "select sparkle as clean,dog as mean " . 
@@ -90,8 +83,6 @@ $get_add_query = $query->get_add(-select   => {'mean' => 'dog'},
                                  -group_by => 'water',
                                  -limit    => ['9678']);
 
-#print "query_num_for: '$query_num_for'\nget_add_query: '$get_add_query'\n\n";
-
 die "Query get_add failed" unless ($query_num_for eq $get_add_query);
  
 $query_num_fiv = "select sparkle as clean " . 
@@ -106,11 +97,9 @@ $get_set_query = $query->get_set(-from     => {'clean' => 'shoes'},
                                  -order_by => ['logic','reason','might'],
                                  -group_by => ['nothing' => 'much']);
 
-#print "query_num_fiv: '$query_num_fiv'\nget_set_query: '$get_set_query'\n\n";
-
 die "Query get_set failed" unless ($query_num_fiv eq $get_set_query);
- 
-$query_num_six = "select nothing ";
+
+$query_num_six = "select nothing";
     
 $query->set(-select   => 'nothing',
             -from     => '',
@@ -122,8 +111,24 @@ $query->set(-select   => 'nothing',
 
 $get_not_query = $query->get();
 
-#print "query_num_six: '$query_num_six'\nget_not_query: '$get_not_query'\n\n";
-
 die "Destructive query failed" unless ($query_num_six eq $get_not_query);
  
-print "Everything seems fine\n";
+$string = to_string('select this from that');
+
+die "to_string string failed" unless ($string eq 'select this from that');
+
+$minus = to_string({-select => 'this',
+                    -from   => 'that'});
+
+die "to_string minus failed" unless ($minus eq 'select this from that');
+
+$hash = to_string({'select' => 'this',
+                   'from'   => 'that'});
+
+die "to_string hash failed" unless ($hash eq 'select this from that');
+
+$query = to_string(Relations::Query->new(-select => 'this',-from   => 'that'));
+
+die "to_string query failed" unless ($query eq 'select this from that');
+
+print "\nEverything seems fine\n";

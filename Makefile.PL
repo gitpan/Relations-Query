@@ -7,13 +7,11 @@ WriteMakefile(
   ($] ge '5.005') ? 
   (
     'AUTHOR'   => 'George A. Fitch III (aka Gaffer), gaf3@gaf3.com',
-    'ABSTRACT' => 'DBI/DBD::mysql object for creating queries',
+    'ABSTRACT' => 'Object for creating SQL queries',
   ) : (),
   'PREREQ_PM' => 
   { 
-    'DBI'        => 1.13,
-    'DBD::mysql' => 1.18,
-    'Relations'  => 0.93
+    'Relations'  => 0.94
   },
   'PM' => {
      'Query.pm' => '$(INST_LIBDIR)/Query.pm'

@@ -19,21 +19,27 @@ use Relations;
 
 # Do the version thing
 
-$Relations::Query::VERSION='0.92';
+$Relations::Query::VERSION='0.93';
 
 @ISA = qw(Exporter);
 
-@EXPORT    = ();	
+@EXPORT = qw(
+  new
+  to_string
+  to_text
+);		
 
 @EXPORT_OK = qw(
-                new
-                clone
-                add
-                set
-                get 
-                get_add
-                get_set 
-               );
+  new
+  clone
+  add
+  set
+  get 
+  get_add
+  get_set 
+  to_string
+  to_text
+);
 
 %EXPORT_TAGS = ();
 
@@ -41,13 +47,18 @@ $Relations::Query::VERSION='0.92';
 
 use strict;
 
-# Create a Relations::Query object.
+
+
+### Creates a Relations::Query object. It takes
+### info for each part of the query, and stores
+### it into the new object.
 
 sub new {
 
   my ($type) = shift;
 
-  # Get all the arguments passed
+  # Get all the arguments passed, which are named 
+  # for their part of the query.
 
   my ($select,
       $from,
@@ -73,7 +84,7 @@ sub new {
 
   bless $self, $type;
 
-  # Add the info into the hash only if it was sent
+  # Add the sent info into the hash
 
   $self->{'select'} = as_clause($select);
   $self->{'from'} = as_clause($from);
@@ -83,11 +94,15 @@ sub new {
   $self->{'order_by'} = comma_clause($order_by);
   $self->{'limit'} = comma_clause($limit);
 
+  # Give thyself
+
   return $self;
 
 }
 
-# Creates a copy of the current query
+
+
+### Creates a copy of a current query.
 
 sub clone {
 
@@ -112,7 +127,9 @@ sub clone {
 
 }
 
-# Gets the query for the object
+
+
+### Gets the query for the object in string form.
 
 sub get {
 
@@ -120,25 +137,29 @@ sub get {
 
   my($self) = shift;
 
-  # Create the string to hold the query
+  # Create an array to hold the query pieces
 
-  my ($query) = "" ;
+  my @query = ();
 
   # Add info where appropriate.
 
-  $query .= length($self->{'select'}) ? "select $self->{'select'} " : "";
-  $query .= length($self->{'from'}) ? "from $self->{'from'} " : "";
-  $query .= length($self->{'where'}) ? "where $self->{'where'} " : "";
-  $query .= length($self->{'group_by'}) ? "group by $self->{'group_by'} " : "";
-  $query .= length($self->{'having'}) ? "having $self->{'having'} " : "";
-  $query .= length($self->{'order_by'}) ? "order by $self->{'order_by'} " : "";
-  $query .= length($self->{'limit'}) ? "limit $self->{'limit'}" : "";
+  push @query, "select $self->{'select'}"     if length($self->{'select'});
+  push @query, "from $self->{'from'}"         if length($self->{'from'});
+  push @query, "where $self->{'where'}"       if length($self->{'where'});
+  push @query, "group by $self->{'group_by'}" if length($self->{'group_by'});
+  push @query, "having $self->{'having'}"     if length($self->{'having'});
+  push @query, "order by $self->{'order_by'}" if length($self->{'order_by'});
+  push @query, "limit $self->{'limit'}"       if length($self->{'limit'});
   
-  return $query;
+  # Return the info, delimitted by a space.
+
+  return join ' ', @query;
 
 }
 
-# Adds data to the existing settings
+
+
+### Adds data to the existing clauses of the query.
 
 sub add {
   
@@ -166,17 +187,19 @@ sub add {
   # already something there, only if something's actually been 
   # sent.
 
-  $self->{'select'} = add_as_clause($self->{'select'},$select);
-  $self->{'from'} = add_as_clause($self->{'from'},$from);
-  $self->{'where'} = add_equals_clause($self->{'where'},$where);
+  $self->{'select'} =   add_as_clause($self->{'select'},$select);
+  $self->{'from'} =     add_as_clause($self->{'from'},$from);
+  $self->{'where'} =    add_equals_clause($self->{'where'},$where);
   $self->{'group_by'} = add_comma_clause($self->{'group_by'},$group_by);
-  $self->{'having'} = add_equals_clause($self->{'having'},$having);
+  $self->{'having'} =   add_equals_clause($self->{'having'},$having);
   $self->{'order_by'} = add_comma_clause($self->{'order_by'},$order_by);
-  $self->{'limit'} = add_comma_clause($self->{'limit'},$limit);
+  $self->{'limit'} =    add_comma_clause($self->{'limit'},$limit);
 
 }
 
-# Sets the existing settings to whatever's sent
+
+
+### Sets the existing settings of a query.
 
 sub set {
   
@@ -184,7 +207,8 @@ sub set {
 
   my ($self) = shift;
 
-  # Get all the other arguments passed
+  # Get all the other arguments passed, which 
+  # are named for their part of the query.
 
   my ($select,
       $from,
@@ -203,18 +227,22 @@ sub set {
   # Put info into the self hash, only if something's actually been 
   # sent.
 
-  $self->{'select'} = set_as_clause($self->{'select'},$select);
-  $self->{'from'} = set_as_clause($self->{'from'},$from);
-  $self->{'where'} = set_equals_clause($self->{'where'},$where);
+  $self->{'select'} =   set_as_clause($self->{'select'},$select);
+  $self->{'from'} =     set_as_clause($self->{'from'},$from);
+  $self->{'where'} =    set_equals_clause($self->{'where'},$where);
   $self->{'group_by'} = set_comma_clause($self->{'group_by'},$group_by);
-  $self->{'having'} = set_equals_clause($self->{'having'},$having);
+  $self->{'having'} =   set_equals_clause($self->{'having'},$having);
   $self->{'order_by'} = set_comma_clause($self->{'order_by'},$order_by);
-  $self->{'limit'} = set_comma_clause($self->{'limit'},$limit);
+  $self->{'limit'} =    set_comma_clause($self->{'limit'},$limit);
 
 }
 
-# Gets the query for the object, and accepts extra parameters
-# to temporarily add on to the current parameters.
+
+
+### Gets the string form of the query object, and accepts 
+### extra info to temporarily add on to the current 
+### clause. The added info will be in the returned string,
+### but will not be stored in the query object.
 
 sub get_add {
 
@@ -238,8 +266,10 @@ sub get_add {
 
 
 
-# Gets the query for the object, and accepts extra parameters
-# to temporarily set over the current parameters.
+### Gets the string form of the query object, and accepts 
+### extra info to temporarily overwrite the current 
+### clause. The set info will be in the returned string,
+### but will not be stored in the query object.
 
 sub get_set {
 
@@ -251,17 +281,86 @@ sub get_set {
 
   my ($get_set) = $self->clone();
 
-  # set the stuff sent to our clone
+  # Set the stuff sent to our clone
 
   $get_set->set(@_);
   
-  # Return our fattened clone's query
+  # Return our altered clone's query
 
   return $get_set->get();
                                 
 }
 
 
+
+### Takes a hash ref, Relations::Query object, or string
+### and returns a string.
+
+sub to_string {
+
+  # Get the query sent
+
+  my ($query) = shift;
+
+  # If we were sent a hash reference, create a new
+  # Relations::Query object.
+
+  $query = new Relations::Query($query) if ref($query) eq 'HASH';
+
+  # If we were sent a query object, get the query 
+  # string from it. 
+
+  $query = $query->get() if ref($query) eq 'Relations::Query';
+
+  # Return the query string
+
+  return $query;
+
+}
+
+
+
+### Returns text info about the Relations::Query 
+### object. Useful for debugging and export purposes.
+
+sub to_text {
+
+  # Know thyself
+
+  my ($self) = shift;
+
+  # Get the indenting string and current
+  # indenting amount.
+
+  my ($string,$current) = @_;
+
+  # Calculate the ident amount so we don't 
+  # do it a bazillion times.
+
+  my $indent = ($string x $current);
+
+  # Create a text string to hold everything
+
+  my $text = '';
+
+  # 411
+
+  $text .= $indent . "Relations::Query: $self\n\n";
+  $text .= $indent . "Select: $self->{select}\n";
+  $text .= $indent . "From: $self->{from}\n";
+  $text .= $indent . "Where: $self->{where}\n";
+  $text .= $indent . "Group By: $self->{group_by}\n";
+  $text .= $indent . "Having: $self->{having}\n";
+  $text .= $indent . "Order By: $self->{order_by}\n";
+  $text .= $indent . "Limit: $self->{limit}\n";
+
+  $text .= "\n";
+
+  # Return the text
+
+  return $text;
+
+}
 
 $Relations::Query::VERSION;
 
@@ -299,17 +398,19 @@ Relations::Query - Object for building queries with DBI/DBD::mysql
                                    -having   => {'kitties'=> 'on_tv'},
                                    -limit    => ['9678']);
 
+  $query = to_string({'select' => 'this',
+                      'from'   => 'that'});
+
 =head1 ABSTRACT
 
-This perl library uses perl5 objects to simplify the query creation
-and manipulation process. It uses an object orientated interface,
-complete with functions to manipulate the query and return the 
-query as a string.
+This perl library uses perl5 objects and functions to simplify the 
+query creation and manipulation process. It uses an object orientated 
+interface, with the exception of the to_string() function, complete 
+with functions to manipulate the query and return the query as a string.
 
 The current version of Relations::Query is available at
 
   http://www.gaf3.com
-  ftp://ftp.gaf3.com
 
 =head1 DESCRIPTION
 
@@ -319,15 +420,17 @@ With Relations::Query you can create a 'select' query by creating a new
 query object, and passing hashes, arrays, or strings of info to the 
 constructor, such as what's within the variables clause, what to order 
 by, etc.  You can also add and override clause info in the query as well, 
-on both a permanent and temporary basis. 
+on both a permanent and temporary basis. With the to_string() function,
+you can create a query string from a hash, query object or string. 
 
 =head2 CALLING RELATIONS::QUERY ROUTINES
 
-All standard Relations::Query routines use both an ordered and named 
-argument calling style. This is because some routines have as many as 
-seven arguments, and the code is easier to understand given a named 
-argument style, but since some people, however, prefer the ordered argument 
-style because its smaller, I'm glad to do that too.
+All Relations::Query routines use an ordered, named and hashed argument 
+calling style, with the exception of the to_string() function which uses
+only an ordered argument calling style. This is because some routines have 
+as many as seven arguments, and the code is easier to understand given a 
+named or hashed argument style, but since some people, however, prefer the 
+ordered argument style because its smaller, I'm glad to do that too.
 
 If you use the ordered argument calling style, such as
 
@@ -350,6 +453,26 @@ Neither case nor order matters in the argument list.  -from, -From, and
 -FROM are all acceptable.  In fact, only the first argument needs to begin with 
 a dash.  If a dash is present in the first argument, Relations::Query assumes
 dashes for the subsequent ones.
+
+If you use the hashed argument calling style, such as
+
+  $query = new Relations::Query({select => ['id','label'],
+                                 from   => 'parts'});
+
+or
+
+  $query = new Relations::Query({-select => ['id','label'],
+                                 -from   => 'parts'});
+
+the order does not matter, but the names, and curly braces do, (minus signs are
+optional). You should consult the function defintions later in this document to 
+determine the names to use.
+
+In the hashed arugment style, no dashes are needed, but they won't cause problems
+if you put them in. Neither case nor order matters in the argument list. from, 
+From, and FROM are all acceptable. If a hash is the first argument, 
+Relations::Query assumes that is the only argument that matters, and ignores any 
+other arguments after the {}'s.
 
 =head2 QUERY ARGUMENTS
 
@@ -416,7 +539,7 @@ For example,
 creates the SQL statment: 
 
   where price=4.99 and type='cap'
-  having total=100 and cost = 19.96
+  having total=100 and cost=19.96
 
 If sent as an array, a where or having argument will become a string of array 
 members, concatented with an ' and '. 
@@ -475,7 +598,7 @@ or possibly:
   order by name,category,color,size
   limit 30,5
 
-If sent as an array, a a group by, order by or limit argument will 
+If sent as an array, a group by, order by or limit argument will 
 become a string of array members, concatented with a ','. 
 
 For example,
@@ -487,7 +610,7 @@ For example,
 creates the SQL statment (without a doubt): 
 
   group by name,color,category,size 
-  order by color,size,name.category
+  order by color,size,name,category
   limit 30,5
 
 If sent as string, a group by, order by or limit argument will stay a 
@@ -502,7 +625,7 @@ For example,
 creates the SQL statment (without a doubt): 
 
   group by name,color,category,size 
-  order by color,size desc,name.category
+  order by color,size desc,name,category
   limit 30
 
 =head1 LIST OF RELATIONS::QUERY FUNCTIONS
@@ -596,68 +719,118 @@ specified clauses.
                   -order_by => $order_by,
                   -limit    => $limit);
 
-Returns the query, with the specified clauses over written. The query
-object is not overwritten, but the string is returned as if it was.
+Returns the query, plus whatever's to be set, in string form. The query
+object is not over written, but the string is returned with the info 
+over written in the specified clauses.
+
+=head2 to_string
+
+  $string = to_string('select this from that');
+
+  $string = to_string({'select' => 'this',
+                       'from'   => 'that'});
+
+  $string = to_string({-select => 'this',
+                       -from   => 'that'});
+
+  $string = to_string(Relations::Query->new(-select => 'this',
+                                            -from   => 'that'));
+
+Returns a query in string form from the arguments sent. It may seem a little
+silly, but Relations::Abstract relies heavily on this function. All the 
+examples above set string equal to 'select this from that'.
+
+=head2 to_text
+
+  $text = $query->to_text($string,$current);
+
+Returns a text representation of a query. Useful for debugging purposes. It
+takes a a string to use for indenting, $string, and the current number of 
+indents, $current. 
+
+=head1 LIST OF RELATIONS::QUERY PROPERTIES
+
+=head2 select
+
+The select part of the query in string form (without the word 'select').
+
+=head2 from
+
+The from part of the query in string form (without the word 'from').
+
+=head2 where
+
+The where part of the query in string form (without the word 'where').
+
+=head2 group_by
+
+The group by part of the query in string form (without the words 'group by').
+
+=head2 having
+
+The having part of the query in string form (without the word 'having').
+
+=head2 order_by
+
+The order by part of the query in string form (without the words 'order by').
+
+=head2 limit
+
+The limit part of the query in string form (without the word 'limit').
 
 =head1 OTHER RELATED WORK
 
-=head2 Relations
+=head2 Relations (Perl)
 
-This perl library contains functions for dealing with databases.
-It's mainly used as the the foundation for all the other 
-Relations modules. It may be useful for people that deal with
-databases in Perl as well.
+Contains functions for dealing with databases. It's mainly used as 
+the foundation for the other Relations modules. It may be useful for 
+people that deal with databases as well.
 
-=head2 Relations::Abstract
+=head2 Relations-Query (Perl)
 
-A DBI/DBD::mysql Perl module. Meant to save development time and code 
-space. It takes the most common (in my experience) collection of DBI 
-calls to a MySQL databate, and changes them to one liner calls to an
-object.
-
-=head2 Relations::Query
-
-An Perl object oriented form of a SQL select query. Takes hash refs,
-array refs, or strings for different clauses (select,where,limit)
+An object oriented form of a SQL select query. Takes hashes.
+arrays, or strings for different clauses (select,where,limit)
 and creates a string for each clause. Also allows users to add to
 existing clauses. Returns a string which can then be sent to a 
-MySQL DBI handle. 
+database. 
 
-=head2 Relations.Admin.inc.php
+=head2 Relations-Abstract (Perl)
 
-Some generalized PHP classes for creating Web interfaces to relational 
-databases. Allows users to add, view, update, and delete records from 
+Meant to save development time and code space. It takes the most common 
+(in my experience) collection of calls to a MySQL database, and changes 
+them to one liner calls to an object.
+
+=head2 Relations-Admin (PHP)
+
+Some generalized objects for creating Web interfaces to relational 
+databases. Allows users to insert, select, update, and delete records from 
 different tables. It has functionality to use tables as lookup values 
 for records in other tables.
 
-=head2 Relations::Family
+=head2 Relations-Family (Perl)
 
-A Perl query engine for relational databases.  It queries members from 
+Query engine for relational databases.  It queries members from 
 any table in a relational database using members selected from any 
 other tables in the relational database. This is especially useful with 
-complex databases; databases with many tables and many connections 
+complex databases: databases with many tables and many connections 
 between tables.
 
-=head2 Relations::Display
+=head2 Relations-Display (Perl)
 
-An Perl module creating GD::Graph objects from database queries. It 
-takes in a query through a Relations::Query object, along with 
-information pertaining to which field values from the query results are 
-to be used in creating the graph title, x axis label and titles, legend 
-label (not used on the graph) and titles, and y axis data. Returns a 
-GD::Graph object built from from the query.
+Module creating graphs from database queries. It takes in a query through a 
+Relations-Query object, along with information pertaining to which field 
+values from the query results are to be used in creating the graph title, 
+x axis label and titles, legend label (not used on the graph) and titles, 
+and y axis data. Returns a graph and/or table built from from the query.
 
-=head2 Relations::Choice
+=head2 Relations-Report (Perl)
 
-An Perl CGI interface for Relations::Family, Reations::Query, and 
-Relations::Display. It creates complex (too complex?) web pages for 
-selecting from the different tables in a Relations::Family object. 
-It also has controls for specifying the grouping and ordering of data
-with a Relations::Query object, which is also based on selections in 
-the Relations::Family object. That Relations::Query can then be passed
-to a Relations::Display object, and a graph or table will be displayed.
-A working model already exists in a production enviroment. I'd like to 
-streamline it, and add some more functionality before releasing it to 
-the world. Shooting for early mid Summer 2001.
+An Web interface for Relations-Family, Reations-Query, and Relations-Display. 
+It creates complex (too complex?) web pages for selecting from the different 
+tables in a Relations-Family object. It also has controls for specifying the 
+grouping and ordering of data with a Relations-Query object, which is also 
+based on selections in the Relations-Family object. That Relations-Query can 
+then be passed to a Relations-Display object, and a graph and/or table will 
+be displayed.
 
 =cut
